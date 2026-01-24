@@ -11,6 +11,10 @@
 - Prefer `type` over `interface`
 - Avoid `any` and `as unknown`.
 
+## React preferences
+
+- Do not import all of react using `import * as React from "react"`. Import only the components you need.
+
 ## Comments
 
 - Generally, don't write comments.
