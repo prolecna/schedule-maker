@@ -8,4 +8,7 @@
 4. Update the theme switcher to be a switch component (only 2 options are light and dark).
    - Added `@radix-ui/react-switch` and created Switch UI component.
    - Replaced dropdown theme switcher with a simple switch toggle between light/dark.
-5.
+5. Using the supabase MCP server, get familiar with the database and all of its tables. Implement the database service which should be able to read the schedule, grades, teachers, subjects and rules. Implement only "get all" methods to start with.
+   - Created `types/db.ts` with TypeScript types generated from Supabase schema.
+   - Created `services/db-service.ts` with getGrades, getTeachers, getSubjects, getRules, and getScheduleSlots functions.
+6.
