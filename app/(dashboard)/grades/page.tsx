@@ -1,8 +1,42 @@
-export default function GradesPage() {
+import { DatabaseService } from "@/services/db-service";
+
+export default async function GradesPage() {
+  const currentUser = (await DatabaseService.getCurrentUser())!;
+  const grades = await DatabaseService.getGrades(currentUser.school_id);
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Grades</h1>
-      <p className="text-muted-foreground mt-2">Manage school grades.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Grades</h1>
+        <p className="text-muted-foreground mt-1">Manage school grades.</p>
+      </div>
+
+      {grades.length === 0 ? (
+        <p className="text-muted-foreground text-center py-8">
+          No grades found. Add your first grade to get started.
+        </p>
+      ) : (
+        <div className="flex flex-wrap gap-4">
+          {grades.map((grade) => (
+            <div
+              key={grade.id}
+              className="w-24 h-24 rounded-xl border bg-card flex flex-col items-center justify-center hover:bg-accent transition-colors cursor-pointer"
+            >
+              <span className="text-3xl font-bold">
+                {grade.level}
+                <sub className="text-sm font-medium text-muted-foreground ml-0.5">
+                  {grade.group ?? 1}
+                </sub>
+              </span>
+              {grade.num_of_students != null && (
+                <span className="text-xs text-muted-foreground mt-2.5">
+                  {grade.num_of_students} students
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

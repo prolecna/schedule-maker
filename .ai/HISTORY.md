@@ -93,3 +93,7 @@ Create a plan to implement this change (db level, code level, etc).
 - Added Sonner toast notifications for success/error feedback.
 - Changed default mode to "Create new" (can switch to "Select existing").
 - UI: compact buttons, custom toast styling (accent bg, thumbs-up icon), fade-only dialog animation.
+
+13. Implemenet the /grades page. It should fetch all grades from db and display them as a list of cards. Each card should be a nice square (with rounded corners) that displays the grade in following format: 5₂ (level = 5, group = 2) - use subscript for this. It should also display the number of students (this is secondary info).
+
+- Grades displayed as square cards with level+group (e.g., 5₂) and student count.

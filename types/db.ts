@@ -44,18 +44,21 @@ export type Database = {
           id: string;
           level: number;
           school_id: string;
+          num_of_students: number | null;
         };
         Insert: {
           group?: number | null;
           id?: string;
           level: number;
           school_id: string;
+          num_of_students: number | null;
         };
         Update: {
           group?: number | null;
           id?: string;
           level?: number;
           school_id?: string;
+          num_of_students: number | null;
         };
       };
       rules: {
