@@ -104,3 +104,9 @@ Create a plan to implement this change (db level, code level, etc).
 - Each card shows the subject name and, if assigned, the teacher(s) as secondary info.
 - Supports multiple teachers per subject and displays all assigned teachers.
 - Added client-side filtering for assigned/unassigned subjects and improved teacher label UX (expands on hover).
+
+15. Implement the /rules page. It should display a table of rules fetched from the db. Columns are: name, rule type, hard rule (checkbox), parameters (prettified and expandible JSON).
+
+- Created /rules page that fetches all rules from the database and displays them in a styled table.
+- Columns: name, rule type (as tag), hard rule (checkbox), and parameters (expandable, prettified JSON).
+- Shows empty state if no rules exist. Matches Teachers table layout for consistency.
