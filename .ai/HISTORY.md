@@ -84,3 +84,12 @@ Create a plan to implement this change (db level, code level, etc).
     - Uses `useTransition` for loading state when fetching subjects.
     - Inserts into `users` table with `auth_id` and `specialty_subject_id`.
 - Added user-friendly error message for duplicate name+subject constraint violation.
+
+12. Add a new column to Teachers table: "Actions". It should have 2 buttons for editing and deleting a teacher. The edit button should open the drawer (same as when creating a new teacher) and fill in the fields. After saving, the row should be updated in the db (users table) and the table should be refreshed. On delete, there should be a warning dialog (are you sure). After confirming, delete the row in the users table in db.
+
+- Added "Actions" column to Teachers table with edit/delete buttons (`teacher-actions.tsx`).
+- Extended `AddTeacherDrawer` with `teacher`, `trigger`, and `onSuccess` props for edit mode support.
+- Added `deleteTeacher` server action with confirmation dialog (uses `Dialog` instead of `AlertDialog` to close on outside click).
+- Added Sonner toast notifications for success/error feedback.
+- Changed default mode to "Create new" (can switch to "Select existing").
+- UI: compact buttons, custom toast styling (accent bg, thumbs-up icon), fade-only dialog animation.

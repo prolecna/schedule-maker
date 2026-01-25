@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,16 @@ import {
 } from "@/components/ui/drawer";
 import { Plus, UserPlus, ChevronDown, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { User, Subject } from "@/types/db";
+import type { User, Subject, UserWithSubject } from "@/types/db";
 import { getAddTeacherData } from "./actions";
+import { toast } from "sonner";
 
 interface AddTeacherDrawerProps {
   schoolId: string;
+  teacher?: UserWithSubject;
+  trigger?: React.ReactNode;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
 interface DrawerData {
@@ -38,11 +43,18 @@ interface DrawerData {
   schoolName: string;
 }
 
-export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
+export function AddTeacherDrawer({
+  schoolId,
+  teacher,
+  trigger,
+  onClose,
+  onSuccess,
+}: AddTeacherDrawerProps) {
+  const isEditMode = !!teacher;
   const [open, setOpen] = useState(false);
   const [data, setData] = useState<DrawerData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [isNewTeacher, setIsNewTeacher] = useState(false);
+  const [isNewTeacher, setIsNewTeacher] = useState(true);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [fullName, setFullName] = useState("");
   const [specialtySubjectId, setSpecialtySubjectId] = useState("");
@@ -50,13 +62,20 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  // Initialize form with teacher data when editing
+  useEffect(() => {
+    if (isEditMode && teacher) {
+      setFullName(teacher.full_name);
+      setSpecialtySubjectId(teacher.specialty_subject_id ?? "");
+      setIsNewTeacher(true); // In edit mode, always show text input
+    }
+  }, [isEditMode, teacher]);
+
   const fetchData = useCallback(async () => {
     setIsLoadingData(true);
     try {
       const result = await getAddTeacherData(schoolId);
       setData(result);
-      // Set isNewTeacher based on whether users without subject are available
-      setIsNewTeacher(result.users.length === 0);
     } catch (err) {
       console.error("Failed to fetch data:", err);
       setError("Failed to load form data");
@@ -66,12 +85,18 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
   }, [schoolId]);
 
   const resetForm = useCallback(() => {
-    setIsNewTeacher(!data || data.users.length === 0);
-    setSelectedUserId("");
-    setFullName("");
-    setSpecialtySubjectId("");
+    if (isEditMode && teacher) {
+      setFullName(teacher.full_name);
+      setSpecialtySubjectId(teacher.specialty_subject_id ?? "");
+      setIsNewTeacher(true);
+    } else {
+      setIsNewTeacher(true);
+      setSelectedUserId("");
+      setFullName("");
+      setSpecialtySubjectId("");
+    }
     setError(null);
-  }, [data]);
+  }, [data, isEditMode, teacher]);
 
   const handleOpenChange = async (newOpen: boolean) => {
     setOpen(newOpen);
@@ -80,6 +105,7 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
       await fetchData();
     } else if (!newOpen) {
       resetForm();
+      onClose?.();
     }
   };
 
@@ -90,15 +116,15 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
     setIsLoading(true);
     setError(null);
 
-    const shouldCreateNew = isNewTeacher || data.users.length === 0;
+    const shouldCreateNew = !isEditMode && (isNewTeacher || data.users.length === 0);
 
-    if (!shouldCreateNew && !selectedUserId) {
+    if (!isEditMode && !shouldCreateNew && !selectedUserId) {
       setError("Please select a user or create a new teacher");
       setIsLoading(false);
       return;
     }
 
-    if (shouldCreateNew && !fullName.trim()) {
+    if ((shouldCreateNew || isEditMode) && !fullName.trim()) {
       setError("Full name is required");
       setIsLoading(false);
       return;
@@ -113,7 +139,18 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
     try {
       const supabase = createClient();
 
-      if (shouldCreateNew) {
+      if (isEditMode && teacher) {
+        // Update existing teacher
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({
+            full_name: fullName.trim(),
+            specialty_subject_id: specialtySubjectId,
+          })
+          .eq("id", teacher.id);
+
+        if (updateError) throw updateError;
+      } else if (shouldCreateNew) {
         // Create a new user without auth_id (virtual teacher)
         const { error: insertError } = await supabase.from("users").insert({
           full_name: fullName.trim(),
@@ -138,6 +175,11 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
       // Clear cached data so it's refetched next time
       setData(null);
       router.refresh();
+      if (onSuccess) {
+        onSuccess();
+      } else if (!isEditMode) {
+        toast.success("Teacher added successfully");
+      }
     } catch (err: unknown) {
       const error = err as { code?: string; message?: string };
       if (error.code === "23505" && error.message?.includes("idx_users_fullname_subject_unique")) {
@@ -153,15 +195,19 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
   return (
     <Drawer open={open} onOpenChange={handleOpenChange} direction="right">
       <DrawerTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add teacher
-        </Button>
+        {trigger ?? (
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Add teacher
+          </Button>
+        )}
       </DrawerTrigger>
       <DrawerContent className="h-full w-[calc(24rem+50px)]">
         <DrawerHeader>
-          <DrawerTitle>Add Teacher</DrawerTitle>
-          <DrawerDescription>Add a new teacher to your school.</DrawerDescription>
+          <DrawerTitle>{isEditMode ? "Edit Teacher" : "Add Teacher"}</DrawerTitle>
+          <DrawerDescription>
+            {isEditMode ? "Update teacher information." : "Add a new teacher to your school."}
+          </DrawerDescription>
         </DrawerHeader>
         {(isLoadingData || !data) && (
           <div className="flex flex-col items-center justify-center flex-1 gap-3">
@@ -176,14 +222,14 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="user">Full Name</Label>
-                    {data.users.length > 0 && (
+                    {!isEditMode && data.users.length > 0 && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
                         className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                         onClick={() => {
-                          setIsNewTeacher(!isNewTeacher);
+                          setIsNewTeacher((prev) => !prev);
                           setSelectedUserId("");
                           setFullName("");
                         }}
@@ -202,7 +248,7 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
                       </Button>
                     )}
                   </div>
-                  {isNewTeacher ? (
+                  {isNewTeacher || isEditMode ? (
                     <Input
                       id="fullName"
                       type="text"
@@ -211,6 +257,7 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
                       onChange={(e) => setFullName(e.target.value)}
                       className="w-full"
                       maxLength={30}
+                      autoFocus
                     />
                   ) : (
                     <Select value={selectedUserId} onValueChange={setSelectedUserId}>
@@ -275,7 +322,13 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
             </div>
             <DrawerFooter>
               <Button type="submit" disabled={isLoading}>
-                {isLoading ? "Adding..." : "Add teacher"}
+                {isLoading
+                  ? isEditMode
+                    ? "Saving..."
+                    : "Adding..."
+                  : isEditMode
+                    ? "Save changes"
+                    : "Add teacher"}
               </Button>
               <DrawerClose asChild>
                 <Button variant="outline" type="button">

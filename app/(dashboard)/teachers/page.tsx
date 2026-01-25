@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { AddTeacherDrawer } from "@/components/add-teacher-drawer";
+import { TeacherActions } from "./teacher-actions";
 
 export default async function TeachersPage() {
   const currentUser = (await DatabaseService.getCurrentUser())!;
@@ -29,12 +30,13 @@ export default async function TeachersPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Subject</TableHead>
+              <TableHead className="w-[100px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {teachers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={2} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
                   No teachers found. Add your first teacher to get started.
                 </TableCell>
               </TableRow>
@@ -43,6 +45,9 @@ export default async function TeachersPage() {
                 <TableRow key={teacher.id}>
                   <TableCell className="font-medium">{teacher.full_name}</TableCell>
                   <TableCell>{teacher.specialty_subject?.name}</TableCell>
+                  <TableCell>
+                    <TeacherActions teacher={teacher} schoolId={currentUser.school_id} />
+                  </TableCell>
                 </TableRow>
               ))
             )}
