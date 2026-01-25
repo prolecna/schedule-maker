@@ -19,13 +19,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/auth/login");
   }
 
-  const profile = await DatabaseService.getCurrentUserProfile();
+  const currentUser = await DatabaseService.getCurrentUser();
 
-  if (!profile) {
+  if (!currentUser) {
     redirect("/auth/complete-profile");
   }
 
-  const school = await DatabaseService.getSchoolById(profile.school_id);
+  const school = await DatabaseService.getSchoolById(currentUser.school_id);
 
   return (
     <div className="min-h-screen flex flex-col">

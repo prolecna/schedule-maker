@@ -58,26 +58,6 @@ export type Database = {
           school_id?: string;
         };
       };
-      profiles: {
-        Row: {
-          full_name: string;
-          id: string;
-          role: string | null;
-          school_id: string;
-        };
-        Insert: {
-          full_name: string;
-          id: string;
-          role?: string | null;
-          school_id: string;
-        };
-        Update: {
-          full_name?: string;
-          id?: string;
-          role?: string | null;
-          school_id?: string;
-        };
-      };
       rules: {
         Row: {
           created_at: string | null;
@@ -179,27 +159,30 @@ export type Database = {
           school_id?: string;
         };
       };
-      teachers: {
+      users: {
         Row: {
           id: string;
-          profile_id: string | null;
-          full_name: string | null;
+          auth_id: string | null;
+          full_name: string;
+          role: string;
           school_id: string;
-          specialty_subject_id: string;
+          specialty_subject_id: string | null;
         };
         Insert: {
           id?: string;
-          profile_id: string | null;
-          full_name: string | null;
+          auth_id?: string | null;
+          full_name: string;
+          role?: string;
           school_id: string;
-          specialty_subject_id: string;
+          specialty_subject_id?: string | null;
         };
         Update: {
           id?: string;
-          profile_id: string | null;
-          full_name: string | null;
+          auth_id?: string | null;
+          full_name?: string;
+          role?: string;
           school_id?: string;
-          specialty_subject_id?: string;
+          specialty_subject_id?: string | null;
         };
       };
     };
@@ -210,20 +193,18 @@ export type Tables<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Row"];
 
 export type Grade = Tables<"grades">;
-export type Teacher = Tables<"teachers">;
+export type User = Tables<"users">;
 export type Subject = Tables<"subjects">;
 export type Rule = Tables<"rules">;
 export type ScheduleSlot = Tables<"schedule_slots">;
-export type Profile = Tables<"profiles">;
 export type School = Tables<"schools">;
 
-export type TeacherWithProfile = Teacher & {
-  profile: Profile | null;
-  specialty_subject: Subject;
+export type UserWithSubject = User & {
+  specialty_subject: Subject | null;
 };
 
 export type ScheduleSlotWithRelations = ScheduleSlot & {
   grade: Grade;
-  teacher: TeacherWithProfile;
+  teacher: UserWithSubject;
   subject: Subject;
 };

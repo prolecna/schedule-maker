@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/drawer";
 import { Plus, UserPlus, ChevronDown, Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Profile, Subject } from "@/types/db";
+import type { User, Subject } from "@/types/db";
 import { getAddTeacherData } from "./actions";
 
 interface AddTeacherDrawerProps {
@@ -33,7 +33,7 @@ interface AddTeacherDrawerProps {
 }
 
 interface DrawerData {
-  profiles: Profile[];
+  users: User[];
   subjects: Subject[];
   schoolName: string;
 }
@@ -43,7 +43,7 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
   const [data, setData] = useState<DrawerData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isNewTeacher, setIsNewTeacher] = useState(false);
-  const [selectedProfileId, setSelectedProfileId] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [fullName, setFullName] = useState("");
   const [specialtySubjectId, setSpecialtySubjectId] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -55,8 +55,8 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
     try {
       const result = await getAddTeacherData(schoolId);
       setData(result);
-      // Set isNewTeacher based on whether profiles are available
-      setIsNewTeacher(result.profiles.length === 0);
+      // Set isNewTeacher based on whether users without subject are available
+      setIsNewTeacher(result.users.length === 0);
     } catch (err) {
       console.error("Failed to fetch data:", err);
       setError("Failed to load form data");
@@ -66,8 +66,8 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
   }, [schoolId]);
 
   const resetForm = useCallback(() => {
-    setIsNewTeacher(!data || data.profiles.length === 0);
-    setSelectedProfileId("");
+    setIsNewTeacher(!data || data.users.length === 0);
+    setSelectedUserId("");
     setFullName("");
     setSpecialtySubjectId("");
     setError(null);
@@ -90,15 +90,15 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
     setIsLoading(true);
     setError(null);
 
-    const shouldUseNewTeacher = isNewTeacher || data.profiles.length === 0;
+    const shouldCreateNew = isNewTeacher || data.users.length === 0;
 
-    if (!shouldUseNewTeacher && !selectedProfileId) {
-      setError("Please select a profile or create a new teacher");
+    if (!shouldCreateNew && !selectedUserId) {
+      setError("Please select a user or create a new teacher");
       setIsLoading(false);
       return;
     }
 
-    if (shouldUseNewTeacher && !fullName.trim()) {
+    if (shouldCreateNew && !fullName.trim()) {
       setError("Full name is required");
       setIsLoading(false);
       return;
@@ -113,39 +113,35 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
     try {
       const supabase = createClient();
 
-      // Get full name from profile if selected
-      let teacherFullName: string | null = null;
-      let profileId: string | null = null;
+      if (shouldCreateNew) {
+        // Create a new user without auth_id (virtual teacher)
+        const { error: insertError } = await supabase.from("users").insert({
+          full_name: fullName.trim(),
+          role: "teacher",
+          school_id: schoolId,
+          specialty_subject_id: specialtySubjectId,
+        });
 
-      if (shouldUseNewTeacher) {
-        teacherFullName = fullName.trim();
+        if (insertError) throw insertError;
       } else {
-        const selectedProfile = data.profiles.find((p) => p.id === selectedProfileId);
-        if (selectedProfile) {
-          teacherFullName = selectedProfile.full_name;
-          profileId = selectedProfile.id;
-        }
+        // Update existing user's specialty_subject_id
+        const { error: updateError } = await supabase
+          .from("users")
+          .update({ specialty_subject_id: specialtySubjectId })
+          .eq("id", selectedUserId);
+
+        if (updateError) throw updateError;
       }
-
-      const { error: insertError } = await supabase.from("teachers").insert({
-        school_id: schoolId,
-        profile_id: profileId,
-        full_name: teacherFullName,
-        specialty_subject_id: specialtySubjectId,
-      });
-
-      if (insertError) throw insertError;
 
       setOpen(false);
       resetForm();
-      // Clear cached data so it's refetched next time (to get updated available profiles)
+      // Clear cached data so it's refetched next time
       setData(null);
       router.refresh();
     } catch (err: unknown) {
-      // Check for unique constraint violation on profile_id
       const error = err as { code?: string; message?: string };
-      if (error.code === "23505" && error.message?.includes("profile_id")) {
-        setError("This profile is already linked to another teacher");
+      if (error.code === "23505" && error.message?.includes("idx_users_fullname_subject_unique")) {
+        setError("A teacher with this name and subject already exists");
       } else {
         setError(error.message ?? "An error occurred");
       }
@@ -179,8 +175,8 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="profile">Full Name</Label>
-                    {data.profiles.length > 0 && (
+                    <Label htmlFor="user">Full Name</Label>
+                    {data.users.length > 0 && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -188,7 +184,7 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
                         className="h-auto px-2 py-1 text-xs text-muted-foreground hover:text-foreground"
                         onClick={() => {
                           setIsNewTeacher(!isNewTeacher);
-                          setSelectedProfileId("");
+                          setSelectedUserId("");
                           setFullName("");
                         }}
                       >
@@ -217,19 +213,19 @@ export function AddTeacherDrawer({ schoolId }: AddTeacherDrawerProps) {
                       maxLength={30}
                     />
                   ) : (
-                    <Select value={selectedProfileId} onValueChange={setSelectedProfileId}>
-                      <SelectTrigger id="profile" className="w-full">
-                        <SelectValue placeholder="Select a profile" />
+                    <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                      <SelectTrigger id="user" className="w-full">
+                        <SelectValue placeholder="Select a user" />
                       </SelectTrigger>
                       <SelectContent position="popper">
-                        {data.profiles.length === 0 ? (
+                        {data.users.length === 0 ? (
                           <SelectItem value="__empty__" disabled>
-                            No profiles available
+                            No users available
                           </SelectItem>
                         ) : (
-                          data.profiles.map((profile) => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.full_name}
+                          data.users.map((user) => (
+                            <SelectItem key={user.id} value={user.id}>
+                              {user.full_name}
                             </SelectItem>
                           ))
                         )}

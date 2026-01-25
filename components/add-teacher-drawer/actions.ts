@@ -3,14 +3,14 @@
 import { DatabaseService } from "@/services/db-service";
 
 export async function getAddTeacherData(schoolId: string) {
-  const [profiles, subjects, school] = await Promise.all([
-    DatabaseService.getAvailableProfiles(schoolId),
+  const [usersWithoutSubject, subjects, school] = await Promise.all([
+    DatabaseService.getUsersWithoutSubject(schoolId),
     DatabaseService.getSubjects(schoolId),
     DatabaseService.getSchoolById(schoolId),
   ]);
 
   return {
-    profiles,
+    users: usersWithoutSubject,
     subjects,
     schoolName: school?.name ?? "Unknown School",
   };

@@ -53,3 +53,34 @@ On submit, it should add a new row to the "teachers" table in db. If user select
 - Added error handling for unique constraint violations with user-friendly message.
 - Hides "Select existing" toggle when no available profiles exist.
 - Clears cached data after successful submission to refresh available profiles.
+
+11. I think the db model is a little complex when it comes to users. I want to merge profiles and teachers tables together. The result would be 1 "users" table with columns: id (from supabase auth), full_name (text), role (text - teacher, admin, etc), school_id, specialty_subject_id.
+
+Create a plan to implement this change (db level, code level, etc).
+
+- Database migrations:
+  - Created `users` table with columns: `id` (UUID), `auth_id` (nullable FK to auth.users), `full_name`, `role`, `school_id`, `specialty_subject_id`.
+  - Migrated data from `profiles` (users with accounts) and `teachers` (including virtual teachers without accounts).
+  - Updated `schedule_slots.teacher_id` and `rules.updated_by` foreign keys to reference `users.id`.
+  - Updated RLS policy on `schedule_slots` to use `users` table instead of `profiles`.
+  - Dropped old `profiles` and `teachers` tables.
+  - Added unique index on `(full_name, specialty_subject_id)` to prevent duplicate teachers.
+- Updated TypeScript types (`types/db.ts`):
+  - Removed `Profile`, `Teacher`, `TeacherWithProfile` types.
+  - Added `User`, `UserWithSubject` types.
+- Updated DatabaseService (`services/db-service.ts`):
+  - Renamed `getCurrentUserProfile()` → `getCurrentUser()` (queries by `auth_id`).
+  - `getTeachers()` now queries `users` with `specialty_subject_id IS NOT NULL`.
+  - Added `getUsers()`, `getUsersWithoutSubject()`, `createUser()`, `updateUser()`.
+  - Removed `getProfiles()`, `getAvailableProfiles()`, `createTeacher()`.
+- Updated components:
+  - Dashboard layout uses `getCurrentUser()`.
+  - Teachers page uses `UserWithSubject` type directly (no more nested `profile`). Removed Role column as it's now redundant.
+  - `AddTeacherDrawer` creates new users or updates existing users' `specialty_subject_id`.
+  - `CompleteProfileForm` moved to `components/complete-profile-form/` folder:
+    - Added server action (`actions.ts`) for fetching subjects by school ID.
+    - Form now requires subject selection (fetched via server action when school changes).
+    - Auto-selects school if only one school exists.
+    - Uses `useTransition` for loading state when fetching subjects.
+    - Inserts into `users` table with `auth_id` and `specialty_subject_id`.
+- Added user-friendly error message for duplicate name+subject constraint violation.

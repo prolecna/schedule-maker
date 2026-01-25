@@ -1,22 +1,26 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
   Grade,
-  Profile,
   Rule,
   ScheduleSlotWithRelations,
   School,
   Subject,
-  TeacherWithProfile,
+  User,
+  UserWithSubject,
 } from "@/types/db";
 
-async function getCurrentUserProfile(): Promise<Profile | null> {
+async function getCurrentUser(): Promise<User | null> {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
+  const authUser = userData.user;
 
-  if (!user) return null;
+  if (!authUser) return null;
 
-  const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("auth_id", authUser.id)
+    .single();
 
   if (error) return null;
   return data;
@@ -35,18 +39,31 @@ async function getGrades(schoolId: string): Promise<Grade[]> {
   return data;
 }
 
-async function getTeachers(schoolId: string): Promise<TeacherWithProfile[]> {
+async function getTeachers(schoolId: string): Promise<UserWithSubject[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("teachers")
+    .from("users")
     .select(
       `
       *,
-      profile:profiles(*),
       specialty_subject:subjects(*)
     `,
     )
-    .eq("school_id", schoolId);
+    .eq("school_id", schoolId)
+    .eq("role", "teacher")
+    .order("full_name");
+
+  if (error) throw error;
+  return data;
+}
+
+async function getUsers(schoolId: string): Promise<User[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("school_id", schoolId)
+    .order("full_name");
 
   if (error) throw error;
   return data;
@@ -85,9 +102,8 @@ async function getScheduleSlots(schoolId: string): Promise<ScheduleSlotWithRelat
       `
       *,
       grade:grades(*),
-      teacher:teachers(
+      teacher:users(
         *,
-        profile:profiles(*),
         specialty_subject:subjects(*)
       ),
       subject:subjects(*)
@@ -117,70 +133,72 @@ async function getSchoolById(schoolId: string): Promise<School | null> {
   return data;
 }
 
-async function getProfiles(schoolId: string): Promise<Profile[]> {
+async function getUsersWithoutSubject(schoolId: string): Promise<User[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("profiles")
+    .from("users")
     .select("*")
     .eq("school_id", schoolId)
+    .is("specialty_subject_id", null)
     .order("full_name");
 
   if (error) throw error;
   return data;
 }
 
-async function getAvailableProfiles(schoolId: string): Promise<Profile[]> {
-  const supabase = await createClient();
-
-  // Get all profile IDs that are already linked to teachers
-  const { data: teachers } = await supabase
-    .from("teachers")
-    .select("profile_id")
-    .eq("school_id", schoolId)
-    .not("profile_id", "is", null);
-
-  const linkedProfileIds = teachers?.map((t) => t.profile_id).filter(Boolean) ?? [];
-
-  // Get profiles that are not linked to any teacher
-  let query = supabase.from("profiles").select("*").eq("school_id", schoolId).order("full_name");
-
-  if (linkedProfileIds.length > 0) {
-    query = query.not("id", "in", `(${linkedProfileIds.join(",")})`);
-  }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-  return data;
-}
-
-async function createTeacher(teacher: {
+async function createUser(user: {
+  authId?: string | null;
+  fullName: string;
+  role?: string;
   schoolId: string;
-  profileId: string | null;
-  fullName: string | null;
-  specialtySubjectId: string;
+  specialtySubjectId?: string | null;
 }): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.from("teachers").insert({
-    school_id: teacher.schoolId,
-    profile_id: teacher.profileId,
-    full_name: teacher.fullName,
-    specialty_subject_id: teacher.specialtySubjectId,
+  const { error } = await supabase.from("users").insert({
+    auth_id: user.authId ?? null,
+    full_name: user.fullName,
+    role: user.role ?? "teacher",
+    school_id: user.schoolId,
+    specialty_subject_id: user.specialtySubjectId ?? null,
   });
 
   if (error) throw error;
 }
 
+async function updateUser(
+  userId: string,
+  updates: {
+    fullName?: string;
+    role?: string;
+    specialtySubjectId?: string | null;
+  },
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("users")
+    .update({
+      ...(updates.fullName && { full_name: updates.fullName }),
+      ...(updates.role && { role: updates.role }),
+      ...(updates.specialtySubjectId !== undefined && {
+        specialty_subject_id: updates.specialtySubjectId,
+      }),
+    })
+    .eq("id", userId);
+
+  if (error) throw error;
+}
+
 export const DatabaseService = {
-  getCurrentUserProfile,
+  getCurrentUser,
   getGrades,
   getTeachers,
+  getUsers,
   getSubjects,
   getRules,
   getScheduleSlots,
   getSchools,
   getSchoolById,
-  getProfiles,
-  getAvailableProfiles,
-  createTeacher,
+  getUsersWithoutSubject,
+  createUser,
+  updateUser,
 };

@@ -16,9 +16,9 @@ export default async function CompleteProfilePage() {
     redirect("/auth/login");
   }
 
-  // Check if profile already exists
-  const profile = await DatabaseService.getCurrentUserProfile();
-  if (profile) {
+  // Check if user already exists in users table
+  const currentUser = await DatabaseService.getCurrentUser();
+  if (currentUser) {
     redirect("/");
   }
 

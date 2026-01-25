@@ -14,8 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import type { School } from "@/types/db";
+import { useState, useTransition, useEffect } from "react";
+import type { School, Subject } from "@/types/db";
+import { getSubjectsBySchool } from "./actions";
 
 interface CompleteProfileFormProps extends React.ComponentPropsWithoutRef<"div"> {
   schools: School[];
@@ -24,10 +25,27 @@ interface CompleteProfileFormProps extends React.ComponentPropsWithoutRef<"div">
 export function CompleteProfileForm({ className, schools, ...props }: CompleteProfileFormProps) {
   const [fullName, setFullName] = useState("");
   const [role] = useState("Teacher");
-  const [schoolId, setSchoolId] = useState("");
+  const [schoolId, setSchoolId] = useState(() => (schools.length === 1 ? schools[0].id : ""));
+  const [subjectId, setSubjectId] = useState("");
+  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (schoolId) {
+      startTransition(async () => {
+        const data = await getSubjectsBySchool(schoolId);
+        setSubjects(data);
+      });
+    }
+  }, [schoolId]);
+
+  const handleSchoolChange = (newSchoolId: string) => {
+    setSchoolId(newSchoolId);
+    setSubjectId("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +64,12 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
       return;
     }
 
+    if (!subjectId) {
+      setError("Please select a subject");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const supabase = createClient();
       const {
@@ -56,11 +80,12 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
         throw new Error("You must be logged in to complete your profile");
       }
 
-      const { error: insertError } = await supabase.from("profiles").insert({
-        id: user.id,
+      const { error: insertError } = await supabase.from("users").insert({
+        auth_id: user.id,
         full_name: fullName.trim(),
         role: role.toLowerCase(),
         school_id: schoolId,
+        specialty_subject_id: subjectId,
       });
 
       if (insertError) throw insertError;
@@ -110,7 +135,7 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="school">School</Label>
-                <Select value={schoolId} onValueChange={setSchoolId} required>
+                <Select value={schoolId} onValueChange={handleSchoolChange} required>
                   <SelectTrigger id="school" className="w-full">
                     <SelectValue placeholder="Select a school" />
                   </SelectTrigger>
@@ -118,6 +143,34 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
                     {schools.map((school) => (
                       <SelectItem key={school.id} value={school.id}>
                         {school.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Select
+                  value={subjectId}
+                  onValueChange={setSubjectId}
+                  disabled={!schoolId || isPending}
+                  required
+                >
+                  <SelectTrigger id="subject" className="w-full">
+                    <SelectValue
+                      placeholder={
+                        !schoolId
+                          ? "Select a school first"
+                          : isPending
+                            ? "Loading subjects..."
+                            : "Select a subject"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
