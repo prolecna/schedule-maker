@@ -8,18 +8,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { redirect } from "next/navigation";
-import { connection } from "next/server";
+import { capitalize } from "@/lib/utils";
 
 export default async function TeachersPage() {
-  await connection();
-
-  const profile = await DatabaseService.getCurrentUserProfile();
-
-  if (!profile) {
-    redirect("/auth/login");
-  }
-
+  const profile = (await DatabaseService.getCurrentUserProfile())!;
   const teachers = await DatabaseService.getTeachers(profile.school_id);
 
   return (
@@ -51,7 +43,7 @@ export default async function TeachersPage() {
                   <TableCell className="font-medium">{teacher.profile.full_name}</TableCell>
                   <TableCell>
                     {teacher.profile.role && (
-                      <Badge variant="secondary">{teacher.profile.role}</Badge>
+                      <Badge variant="secondary">{capitalize(teacher.profile.role)}</Badge>
                     )}
                   </TableCell>
                   <TableCell>{teacher.specialty_subject.name}</TableCell>

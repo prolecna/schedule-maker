@@ -15,3 +15,14 @@
    - Added shadcn/ui Table component.
    - Added `getCurrentUserProfile` method to DatabaseService to fetch the current user's profile (including school_id).
    - Updated `/teachers` page to fetch teachers from the database and display them in a styled table with columns for Name, Role, and Specialty Subject.
+7. Currently, the sign up form in this application takes an email and password. On submit, it creates a new user in the Supabase system. I want to add onto that - after the user is created, I want to proceed to the "next step" form that has following inputs:
+   - Full name (required text input with max-length of 30 chars)
+   - Role (dropdown with autoselected only option of "Teacher")
+   - School (dropdown with options from the "schools" table in db)
+     On submit, the data is used to create a new row in the "profiles" table in Supabase db.
+
+- Added shadcn/ui Select component for dropdowns.
+- Added `getSchools` method to DatabaseService.
+- Created `CompleteProfileForm` component with full name input (max 30 chars with counter), role dropdown (pre-selected "Teacher"), and school dropdown.
+- Created `/auth/complete-profile` page that fetches schools and redirects if profile already exists.
+- Updated `/auth/confirm` route to redirect to `/auth/complete-profile` after email verification.

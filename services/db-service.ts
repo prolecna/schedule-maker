@@ -4,6 +4,7 @@ import type {
   Profile,
   Rule,
   ScheduleSlotWithRelations,
+  School,
   Subject,
   TeacherWithProfile,
 } from "@/types/db";
@@ -100,6 +101,14 @@ async function getScheduleSlots(schoolId: string): Promise<ScheduleSlotWithRelat
   return data;
 }
 
+async function getSchools(): Promise<School[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("schools").select("*").order("name");
+
+  if (error) throw error;
+  return data;
+}
+
 export const DatabaseService = {
   getCurrentUserProfile,
   getGrades,
@@ -107,4 +116,5 @@ export const DatabaseService = {
   getSubjects,
   getRules,
   getScheduleSlots,
+  getSchools,
 };
