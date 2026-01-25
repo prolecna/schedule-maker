@@ -97,3 +97,10 @@ Create a plan to implement this change (db level, code level, etc).
 13. Implemenet the /grades page. It should fetch all grades from db and display them as a list of cards. Each card should be a nice square (with rounded corners) that displays the grade in following format: 5₂ (level = 5, group = 2) - use subscript for this. It should also display the number of students (this is secondary info).
 
 - Grades displayed as square cards with level+group (e.g., 5₂) and student count.
+
+14. Implemenet the /subjects page. It should fetch all subjects from db and display them as a list of cards. Each card should display the name of the subject (primary info) and the name of the teacher for that subject, if any (secondary info).
+
+- Created /subjects page that fetches all subjects from the database and displays them as cards.
+- Each card shows the subject name and, if assigned, the teacher(s) as secondary info.
+- Supports multiple teachers per subject and displays all assigned teachers.
+- Added client-side filtering for assigned/unassigned subjects and improved teacher label UX (expands on hover).

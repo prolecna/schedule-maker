@@ -206,6 +206,10 @@ export type UserWithSubject = User & {
   specialty_subject: Subject | null;
 };
 
+export type SubjectWithTeacher = Subject & {
+  teachers: User[];
+};
+
 export type ScheduleSlotWithRelations = ScheduleSlot & {
   grade: Grade;
   teacher: UserWithSubject;

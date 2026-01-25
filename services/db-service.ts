@@ -5,6 +5,7 @@ import type {
   ScheduleSlotWithRelations,
   School,
   Subject,
+  SubjectWithTeacher,
   User,
   UserWithSubject,
 } from "@/types/db";
@@ -79,6 +80,34 @@ async function getSubjects(schoolId: string): Promise<Subject[]> {
 
   if (error) throw error;
   return data;
+}
+
+async function getSubjectsWithTeachers(schoolId: string): Promise<SubjectWithTeacher[]> {
+  const supabase = await createClient();
+
+  // Fetch all subjects
+  const { data: subjects, error: subjectsError } = await supabase
+    .from("subjects")
+    .select("*")
+    .eq("school_id", schoolId)
+    .order("name");
+
+  if (subjectsError) throw subjectsError;
+
+  // Fetch all teachers (users with role='teacher')
+  const { data: teachers, error: teachersError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("school_id", schoolId)
+    .eq("role", "teacher");
+
+  if (teachersError) throw teachersError;
+
+  // Map teachers to subjects
+  return subjects.map((subject) => ({
+    ...subject,
+    teachers: teachers.filter((t) => t.specialty_subject_id === subject.id),
+  }));
 }
 
 async function getRules(schoolId: string): Promise<Rule[]> {
@@ -194,6 +223,7 @@ export const DatabaseService = {
   getTeachers,
   getUsers,
   getSubjects,
+  getSubjectsWithTeachers,
   getRules,
   getScheduleSlots,
   getSchools,
