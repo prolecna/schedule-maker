@@ -182,19 +182,22 @@ export type Database = {
       teachers: {
         Row: {
           id: string;
-          profile_id: string;
+          profile_id: string | null;
+          full_name: string | null;
           school_id: string;
           specialty_subject_id: string;
         };
         Insert: {
           id?: string;
-          profile_id: string;
+          profile_id: string | null;
+          full_name: string | null;
           school_id: string;
           specialty_subject_id: string;
         };
         Update: {
           id?: string;
-          profile_id?: string;
+          profile_id: string | null;
+          full_name: string | null;
           school_id?: string;
           specialty_subject_id?: string;
         };
@@ -215,7 +218,7 @@ export type Profile = Tables<"profiles">;
 export type School = Tables<"schools">;
 
 export type TeacherWithProfile = Teacher & {
-  profile: Profile;
+  profile: Profile | null;
   specialty_subject: Subject;
 };
 

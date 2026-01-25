@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { capitalize } from "@/lib/utils";
+import { AddTeacherDrawer } from "@/components/add-teacher-drawer";
 
 export default async function TeachersPage() {
   const profile = (await DatabaseService.getCurrentUserProfile())!;
@@ -16,9 +17,12 @@ export default async function TeachersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Teachers</h1>
-        <p className="text-muted-foreground mt-1">Manage teachers in your school.</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Teachers</h1>
+          <p className="text-muted-foreground mt-1">Manage teachers in your school.</p>
+        </div>
+        <AddTeacherDrawer schoolId={profile.school_id} />
       </div>
 
       <div className="rounded-lg border">
@@ -40,9 +44,11 @@ export default async function TeachersPage() {
             ) : (
               teachers.map((teacher) => (
                 <TableRow key={teacher.id}>
-                  <TableCell className="font-medium">{teacher.profile.full_name}</TableCell>
+                  <TableCell className="font-medium">
+                    {teacher.profile?.full_name ?? teacher.full_name}
+                  </TableCell>
                   <TableCell>
-                    {teacher.profile.role && (
+                    {teacher.profile?.role && (
                       <Badge variant="secondary">{capitalize(teacher.profile.role)}</Badge>
                     )}
                   </TableCell>

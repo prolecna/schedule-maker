@@ -34,3 +34,22 @@ On submit, the data is used to create a new row in the "profiles" table in Supab
    - Added `getSchoolById` method to DatabaseService.
    - Updated Sidebar component to accept `schoolName` prop and display it above the navigation.
    - Updated dashboard layout to fetch the school and pass its name to the Sidebar.
+10. Display a "Add teacher" button on the right side of the "Teachers" h1 tag. When clicked, it should open a drawer from the right side of the screen with a form. The form inputs are:
+
+- School (readonly label with the school of the currently logged in user)
+- Full name (required dropdown field that lists profiles from the db + an option to create a new teacher (without a profile) which should convert the input into a text field - you should also be able to switch back to dropdown mode)
+- Specialty (list of "subjects" from db)
+
+On submit, it should add a new row to the "teachers" table in db. If user selected an existing profile, it should add it to the "profile_id" field (and also fetch the full_name from the profile and copy it to the "full_name" field in newly created teachers row). Otherwise, if user input the full name instead (no existing profile), it should only fill the "full_name" field in db.
+
+- Added `vaul` library and created shadcn/ui Drawer component (slides from right).
+- Added `getAvailableProfiles` method to DatabaseService to fetch profiles not yet linked to teachers.
+- Created `AddTeacherDrawer` component in `components/add-teacher-drawer/` folder with:
+  - Server action (`actions.ts`) for lazy-loading drawer data only when opened.
+  - School name display (readonly label).
+  - Profile selection dropdown with toggle to switch to "create new" mode (text input for full name).
+  - Subject selection as a flat scrollable list with styled bordered buttons and custom scrollbar.
+- Added partial unique index on `teachers.profile_id` in Supabase to prevent duplicate profile links.
+- Added error handling for unique constraint violations with user-friendly message.
+- Hides "Select existing" toggle when no available profiles exist.
+- Clears cached data after successful submission to refresh available profiles.
