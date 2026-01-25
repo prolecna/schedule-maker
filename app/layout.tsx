@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 export const metadata: Metadata = {
   title: "Schedule Maker",
   description: "Easily create school schedules",
+  metadataBase: new URL("https://schedule-maker-sigma.vercel.app/"),
 };
 
 const geistSans = Geist({
