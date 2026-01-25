@@ -1,11 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 import type {
   Grade,
+  Profile,
   Rule,
   ScheduleSlotWithRelations,
   Subject,
   TeacherWithProfile,
 } from "@/types/db";
+
+async function getCurrentUserProfile(): Promise<Profile | null> {
+  const supabase = await createClient();
+  const { data: userData } = await supabase.auth.getUser();
+  const user = userData.user;
+
+  if (!user) return null;
+
+  const { data, error } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+
+  if (error) return null;
+  return data;
+}
 
 async function getGrades(schoolId: string): Promise<Grade[]> {
   const supabase = await createClient();
@@ -87,6 +101,7 @@ async function getScheduleSlots(schoolId: string): Promise<ScheduleSlotWithRelat
 }
 
 export const DatabaseService = {
+  getCurrentUserProfile,
   getGrades,
   getTeachers,
   getSubjects,

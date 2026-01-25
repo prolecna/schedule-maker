@@ -11,4 +11,7 @@
 5. Using the supabase MCP server, get familiar with the database and all of its tables. Implement the database service which should be able to read the schedule, grades, teachers, subjects and rules. Implement only "get all" methods to start with.
    - Created `types/db.ts` with TypeScript types generated from Supabase schema.
    - Created `services/db-service.ts` with getGrades, getTeachers, getSubjects, getRules, and getScheduleSlots functions.
-6.
+6. Using the database service, fetch all teachers and display them on the /teachers page in a nice-looking table from Radix UI.
+   - Added shadcn/ui Table component.
+   - Added `getCurrentUserProfile` method to DatabaseService to fetch the current user's profile (including school_id).
+   - Updated `/teachers` page to fetch teachers from the database and display them in a styled table with columns for Name, Role, and Specialty Subject.
