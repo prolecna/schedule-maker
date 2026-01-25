@@ -25,6 +25,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
     redirect("/auth/complete-profile");
   }
 
+  const school = await DatabaseService.getSchoolById(profile.school_id);
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-border h-14 flex items-center px-4 justify-between">
@@ -39,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </header>
       <div className="flex flex-1">
-        <Sidebar />
+        <Sidebar schoolName={school?.name ?? "Unknown School"} />
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>

@@ -109,6 +109,14 @@ async function getSchools(): Promise<School[]> {
   return data;
 }
 
+async function getSchoolById(schoolId: string): Promise<School | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("schools").select("*").eq("id", schoolId).single();
+
+  if (error) return null;
+  return data;
+}
+
 export const DatabaseService = {
   getCurrentUserProfile,
   getGrades,
@@ -117,4 +125,5 @@ export const DatabaseService = {
   getRules,
   getScheduleSlots,
   getSchools,
+  getSchoolById,
 };

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, GraduationCap, Users, BookOpen, Scale } from "lucide-react";
+import { CalendarDays, GraduationCap, Users, BookOpen, Scale, BookOpenText } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -19,11 +19,21 @@ const navItems: NavItem[] = [
   { label: "Rules", href: "/rules", icon: <Scale size={20} /> },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  schoolName: string;
+}
+
+export function Sidebar({ schoolName }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <aside className="w-64 border-r border-border bg-card h-full">
+      <div className="p-4 border-b border-border">
+        <p className="font-semibold text-center flex items-center gap-2">
+          <BookOpenText size={22} className="shrink-0" />
+          {schoolName}
+        </p>
+      </div>
       <nav className="flex flex-col gap-1 p-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;

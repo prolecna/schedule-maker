@@ -19,10 +19,18 @@
    - Full name (required text input with max-length of 30 chars)
    - Role (dropdown with autoselected only option of "Teacher")
    - School (dropdown with options from the "schools" table in db)
-     On submit, the data is used to create a new row in the "profiles" table in Supabase db.
+
+On submit, the data is used to create a new row in the "profiles" table in Supabase db.
 
 - Added shadcn/ui Select component for dropdowns.
 - Added `getSchools` method to DatabaseService.
 - Created `CompleteProfileForm` component with full name input (max 30 chars with counter), role dropdown (pre-selected "Teacher"), and school dropdown.
 - Created `/auth/complete-profile` page that fetches schools and redirects if profile already exists.
 - Updated `/auth/confirm` route to redirect to `/auth/complete-profile` after email verification.
+
+8. Make sure the user cannot visit any pages if he is only a Supabase user, but he doesn't have a profile in the "profiles" table.
+   - Already implemented in the dashboard layout - checks for profile existence and redirects to `/auth/complete-profile` if not found.
+9. Display the logged in user's School name above the navigation sidebar on the left.
+   - Added `getSchoolById` method to DatabaseService.
+   - Updated Sidebar component to accept `schoolName` prop and display it above the navigation.
+   - Updated dashboard layout to fetch the school and pass its name to the Sidebar.
