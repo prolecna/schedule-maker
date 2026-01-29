@@ -28,11 +28,6 @@ export default async function GradesPage() {
                   {grade.group ?? 1}
                 </sub>
               </span>
-              {grade.num_of_students != null && (
-                <span className="text-xs text-muted-foreground mt-2.5">
-                  {grade.num_of_students} students
-                </span>
-              )}
             </div>
           ))}
         </div>
