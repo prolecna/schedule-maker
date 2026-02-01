@@ -12,7 +12,7 @@ export const DAYS = [
 export const PERIODS = [1, 2, 3, 4, 5, 6, 7, 8] as const;
 
 // Subscript digits for group display
-const SUBSCRIPT_DIGITS: Record<number, string> = {
+export const SUBSCRIPT_DIGITS: Record<number, string> = {
   0: "₀",
   1: "₁",
   2: "₂",

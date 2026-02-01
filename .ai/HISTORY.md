@@ -135,3 +135,13 @@ Create a plan to implement this change (db level, code level, etc).
 - Snapshots: Created schedule_snapshots table to store full point-in-time JSON backups with reason, created_at, and created_by.
 - Security: Enabled RLS and added policies for schedules and schedule_snapshots (school-scoped read; admin write).
 - App types & API: Updated db.ts and db-service.ts; Refactored db-service into smaller services.
+
+21. Above the table, there should be 3 exclusive toggle buttons: school, teacher, grade. This determines from which point of view is the schedule displayed.
+
+- school POV: in this case, the table columns remain the same as described in previous step.
+- teacher POV: in this case, the table columns are: Day of week,1,2,3,4,5,6,7,8.
+- grade POV: in this case, the table columns are: # (period number), Monday, Tuesday, Wednesday, Thursday, Friday.
+
+- Schedule page: Implemented the /schedule page and ScheduleTable component to fetch active schedule slots and render the timetable layout (page.tsx, schedule-table.tsx).
+- POV controls: Added School / Teacher / Grade view modes with interactive controls, teacher autocomplete, and grade button group (includes “All” behavior that stacks schedules).
+- UI polish: Tightened period column widths, added day header spanning periods, vertical day separators, sticky left columns, light-mode friendly backgrounds, and set cell values to font-normal.
