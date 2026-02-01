@@ -20,7 +20,7 @@ async function getCurrentUser(): Promise<UserWithSchools | null> {
 
   const { data: user, error } = await supabase
     .from("users")
-    .select(`id, auth_id, full_name, specialty_subject_id, active_school_id`)
+    .select(`id, auth_id, full_name, specialty_subject_id, active_school_id, role`)
     .eq("auth_id", authUser.id)
     .single();
 
@@ -31,7 +31,7 @@ async function getCurrentUser(): Promise<UserWithSchools | null> {
 
   const { data: userSchools, error: userSchoolsError } = await supabase
     .from("user_schools")
-    .select("school_id, created_at, role, schools(id, name)")
+    .select("school_id, created_at, schools(id, name)")
     .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
@@ -45,7 +45,7 @@ async function getCurrentUser(): Promise<UserWithSchools | null> {
         id: r.school_id,
         name: fullSchool?.name ?? null,
         created_at: r.created_at ?? null,
-        role: r.role,
+        role: user.role ?? null,
       };
     });
   }
@@ -71,19 +71,16 @@ async function getGrades(schoolId: string): Promise<Grade[]> {
 
 async function getTeachers(schoolId: string): Promise<UserWithSubject[]> {
   const supabase = await createClient();
-  // fetch users that have a membership row for the school with role = 'teacher'
   const { data, error } = await supabase
-    .from("user_schools")
-    .select("role, user:users(*, specialty_subject:subjects(*))")
-    .eq("school_id", schoolId)
+    .from("users")
+    .select("*, specialty_subject:subjects(*), user_schools!inner(school_id)")
+    .eq("user_schools.school_id", schoolId)
     .eq("role", "teacher")
-    .order("created_at");
+    .order("full_name");
 
   if (error) throw error;
 
-  // normalize to array of users
-  const users = (data || []).map((r: any) => r.user);
-  return users;
+  return (data || []) as UserWithSubject[];
 }
 
 async function getUsers(schoolId: string): Promise<User[]> {
@@ -122,16 +119,16 @@ async function getSubjectsWithTeachers(schoolId: string): Promise<SubjectWithTea
 
   if (subjectsError) throw subjectsError;
 
-  // Fetch all teachers via user_schools membership
+  // Fetch teachers via users table with an inner join to user_schools and role filter
   const { data: teacherRows, error: teachersError } = await supabase
-    .from("user_schools")
-    .select("user:users(*)")
-    .eq("school_id", schoolId)
+    .from("users")
+    .select("*, specialty_subject:subjects(*), user_schools!inner(school_id)")
+    .eq("user_schools.school_id", schoolId)
     .eq("role", "teacher");
 
   if (teachersError) throw teachersError;
 
-  const teachers = (teacherRows || []).map((r: any) => r.user);
+  const teachers = (teacherRows || []) as UserWithSubject[];
 
   // Map teachers to subjects
   return subjects.map((subject) => ({
@@ -196,7 +193,7 @@ async function getUserSchools(): Promise<SchoolWithRole[]> {
 
   const { data: userRow, error: userRowErr } = await supabase
     .from("users")
-    .select("id")
+    .select("id, role")
     .eq("auth_id", user.id)
     .maybeSingle();
 
@@ -204,7 +201,7 @@ async function getUserSchools(): Promise<SchoolWithRole[]> {
 
   const { data, error } = await supabase
     .from("user_schools")
-    .select("school_id, role, created_at, schools(id, name)")
+    .select("school_id, created_at, schools(id, name)")
     .eq("user_id", userRow.id);
 
   if (error || !data) return [];
@@ -214,7 +211,7 @@ async function getUserSchools(): Promise<SchoolWithRole[]> {
     return {
       id: row.school_id || nested?.id,
       name: nested?.name ?? null,
-      role: row.role,
+      role: userRow?.role ?? null,
       created_at: row.created_at,
     };
   });
@@ -254,6 +251,7 @@ async function createUser(user: {
       auth_id: user.authId ?? null,
       full_name: user.fullName,
       specialty_subject_id: user.specialtySubjectId ?? null,
+      role: user.role ?? null,
     })
     .select("id")
     .single();
@@ -265,7 +263,6 @@ async function createUser(user: {
     const res = await supabase.from("user_schools").insert({
       user_id: insertData.id,
       school_id: user.schoolId,
-      role: user.role === "admin" ? "admin" : "teacher",
     });
 
     if (res.error) throw res.error;
@@ -288,6 +285,7 @@ async function updateUser(
       ...(updates.specialtySubjectId !== undefined && {
         specialty_subject_id: updates.specialtySubjectId,
       }),
+      ...(updates.role !== undefined && { role: updates.role }),
     })
     .eq("id", userId);
 

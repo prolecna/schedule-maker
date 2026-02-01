@@ -157,6 +157,7 @@ export function AddTeacherDrawer({
           .insert({
             full_name: fullName.trim(),
             specialty_subject_id: specialtySubjectId,
+            role: "teacher",
           })
           .select("id")
           .single();
@@ -167,7 +168,6 @@ export function AddTeacherDrawer({
         const { error: membershipError } = await supabase.from("user_schools").insert({
           user_id: newUser.id,
           school_id: schoolId,
-          role: "teacher",
         });
 
         if (membershipError) throw membershipError;

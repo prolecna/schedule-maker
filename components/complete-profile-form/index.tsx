@@ -80,15 +80,29 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
         throw new Error("You must be logged in to complete your profile");
       }
 
-      const { error: insertError } = await supabase.from("users").insert({
-        auth_id: user.id,
-        full_name: fullName.trim(),
-        role: role.toLowerCase(),
-        school_id: schoolId,
-        specialty_subject_id: subjectId,
-      });
+      const { data: newUser, error: insertError } = await supabase
+        .from("users")
+        .insert({
+          auth_id: user.id,
+          full_name: fullName.trim(),
+          role: role.toLowerCase(),
+          active_school_id: schoolId,
+          specialty_subject_id: subjectId,
+        })
+        .select("id")
+        .single();
 
       if (insertError) throw insertError;
+
+      // create membership row in user_schools for the selected school
+      if (newUser?.id) {
+        const { error: membershipError } = await supabase.from("user_schools").insert({
+          user_id: newUser.id,
+          school_id: schoolId,
+        });
+
+        if (membershipError) throw membershipError;
+      }
 
       router.refresh();
     } catch (err: unknown) {

@@ -125,3 +125,5 @@ Create a plan to implement this change (db level, code level, etc).
 - Types & Services: Updated db.ts and refactored db-service.ts (getCurrentUser, getUserSchools, getTeachers, updateUserActiveSchool).
   - `getCurrentUser` now returns user info, the school he belongs to and his active school ID
 - UI Updates: Redesigned the choose-school experience; Improved the school selection component in sidebar navigation.
+
+18. Move "role" column from "user_schools" to "users" table. Update the application code accordingly.
