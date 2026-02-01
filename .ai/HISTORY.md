@@ -110,3 +110,18 @@ Create a plan to implement this change (db level, code level, etc).
 - Created /rules page that fetches all rules from the database and displays them in a styled table.
 - Columns: name, rule type (as tag), hard rule (checkbox), and parameters (expandable, prettified JSON).
 - Shows empty state if no rules exist. Matches Teachers table layout for consistency.
+
+16. Remove the num_of_students column from grades table in db. Remove the usage of this field in application code.
+    The reason for this removal is because this data is not available when importing from an excel file.
+
+- Removed the num_of_students column from grades table.
+- Removed the usage of this field in application code.
+
+17. Modify the supabase database in order to allow support for multiple schools per user. Update the application code accordingly.
+
+- DB Migration: Created the user_schools join table and user_school_role enum, migrating per-school role out of the legacy users columns.
+- Added "active_school_id" field to "users" table and adjusted the app logic to use it
+- RLS Policies: Rewrote SELECT/UPDATE/DELETE policies (for subjects, grades, rules, schools, user_schools) to use a JOIN-based predicate that compares users.auth_id = auth.uid().
+- Types & Services: Updated db.ts and refactored db-service.ts (getCurrentUser, getUserSchools, getTeachers, updateUserActiveSchool).
+  - `getCurrentUser` now returns user info, the school he belongs to and his active school ID
+- UI Updates: Redesigned the choose-school experience; Improved the school selection component in sidebar navigation.

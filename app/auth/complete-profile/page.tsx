@@ -2,10 +2,15 @@ import { CompleteProfileForm } from "@/components/complete-profile-form";
 import { DatabaseService } from "@/services/db-service";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { navItems } from "@/components/navigation-sidebar/nav-items";
 
 export const dynamic = "force-dynamic";
 
-export default async function CompleteProfilePage() {
+export default async function CompleteProfilePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -19,7 +24,15 @@ export default async function CompleteProfilePage() {
   // Check if user already exists in users table
   const currentUser = await DatabaseService.getCurrentUser();
   if (currentUser) {
-    redirect("/");
+    const queryParams = await searchParams;
+    const redirectParam = queryParams?.redirect;
+    const validRedirectUrls = navItems.map((item) => item.href);
+    let redirectUrl = "/schedule";
+    if (typeof redirectParam === "string" && validRedirectUrls.includes(redirectParam)) {
+      redirectUrl = redirectParam;
+    }
+
+    redirect(redirectUrl);
   }
 
   const schools = await DatabaseService.getSchools();

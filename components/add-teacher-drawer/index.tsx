@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, ReactNode, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import { toast } from "sonner";
 interface AddTeacherDrawerProps {
   schoolId: string;
   teacher?: UserWithSubject;
-  trigger?: React.ReactNode;
+  trigger?: ReactNode;
   onClose?: () => void;
   onSuccess?: () => void;
 }
@@ -109,7 +109,7 @@ export function AddTeacherDrawer({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!data) return;
 
@@ -152,14 +152,25 @@ export function AddTeacherDrawer({
         if (updateError) throw updateError;
       } else if (shouldCreateNew) {
         // Create a new user without auth_id (virtual teacher)
-        const { error: insertError } = await supabase.from("users").insert({
-          full_name: fullName.trim(),
-          role: "teacher",
-          school_id: schoolId,
-          specialty_subject_id: specialtySubjectId,
-        });
+        const { data: newUser, error: insertError } = await supabase
+          .from("users")
+          .insert({
+            full_name: fullName.trim(),
+            specialty_subject_id: specialtySubjectId,
+          })
+          .select("id")
+          .single();
 
         if (insertError) throw insertError;
+
+        // create membership row in user_schools
+        const { error: membershipError } = await supabase.from("user_schools").insert({
+          user_id: newUser.id,
+          school_id: schoolId,
+          role: "teacher",
+        });
+
+        if (membershipError) throw membershipError;
       } else {
         // Update existing user's specialty_subject_id
         const { error: updateError } = await supabase

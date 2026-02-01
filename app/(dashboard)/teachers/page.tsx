@@ -1,4 +1,7 @@
+import { TeacherActions } from "./teacher-actions";
+import { UserService } from "@/services/user-service";
 import { DatabaseService } from "@/services/db-service";
+import { AddTeacherDrawer } from "@/components/add-teacher-drawer";
 import {
   Table,
   TableBody,
@@ -7,12 +10,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AddTeacherDrawer } from "@/components/add-teacher-drawer";
-import { TeacherActions } from "./teacher-actions";
 
 export default async function TeachersPage() {
-  const currentUser = (await DatabaseService.getCurrentUser())!;
-  const teachers = await DatabaseService.getTeachers(currentUser.school_id);
+  const user = await DatabaseService.getCurrentUser();
+  const currentUser = await UserService.checkCurrentUser(user, "/teachers");
+  const teachers = await DatabaseService.getTeachers(currentUser.active_school_id);
 
   return (
     <div className="space-y-6">
@@ -21,7 +23,7 @@ export default async function TeachersPage() {
           <h1 className="text-2xl font-bold">Teachers</h1>
           <p className="text-muted-foreground mt-1">Manage teachers in your school.</p>
         </div>
-        <AddTeacherDrawer schoolId={currentUser.school_id} />
+        <AddTeacherDrawer schoolId={currentUser.active_school_id} />
       </div>
 
       <div className="rounded-lg border">
@@ -46,7 +48,7 @@ export default async function TeachersPage() {
                   <TableCell className="font-medium">{teacher.full_name}</TableCell>
                   <TableCell>{teacher.specialty_subject?.name}</TableCell>
                   <TableCell>
-                    <TeacherActions teacher={teacher} schoolId={currentUser.school_id} />
+                    <TeacherActions teacher={teacher} schoolId={currentUser.active_school_id} />
                   </TableCell>
                 </TableRow>
               ))

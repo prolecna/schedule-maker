@@ -4,27 +4,56 @@ import type {
   Rule,
   ScheduleSlotWithRelations,
   School,
+  SchoolWithRole,
   Subject,
   SubjectWithTeacher,
   User,
+  UserWithSchools,
   UserWithSubject,
 } from "@/types/db";
 
-async function getCurrentUser(): Promise<User | null> {
+async function getCurrentUser(): Promise<UserWithSchools | null> {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const authUser = userData.user;
-
   if (!authUser) return null;
 
-  const { data, error } = await supabase
+  const { data: user, error } = await supabase
     .from("users")
-    .select("*")
+    .select(`id, auth_id, full_name, specialty_subject_id, active_school_id`)
     .eq("auth_id", authUser.id)
     .single();
 
-  if (error) return null;
-  return data;
+  if (error) {
+    console.warn("Failed to fetch current user:", error);
+    return null;
+  }
+
+  const { data: userSchools, error: userSchoolsError } = await supabase
+    .from("user_schools")
+    .select("school_id, created_at, role, schools(id, name)")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  let schools: SchoolWithRole[] = [];
+  if (userSchoolsError) {
+    console.warn("Failed to fetch user schools:", userSchoolsError);
+  } else if (userSchools && Array.isArray(userSchools)) {
+    schools = userSchools.map((r) => {
+      const fullSchool = Array.isArray(r.schools) ? r.schools[0] : r.schools;
+      return {
+        id: r.school_id,
+        name: fullSchool?.name ?? null,
+        created_at: r.created_at ?? null,
+        role: r.role,
+      };
+    });
+  }
+
+  return {
+    ...user,
+    schools,
+  };
 }
 
 async function getGrades(schoolId: string): Promise<Grade[]> {
@@ -42,32 +71,31 @@ async function getGrades(schoolId: string): Promise<Grade[]> {
 
 async function getTeachers(schoolId: string): Promise<UserWithSubject[]> {
   const supabase = await createClient();
+  // fetch users that have a membership row for the school with role = 'teacher'
   const { data, error } = await supabase
-    .from("users")
-    .select(
-      `
-      *,
-      specialty_subject:subjects(*)
-    `,
-    )
+    .from("user_schools")
+    .select("role, user:users(*, specialty_subject:subjects(*))")
     .eq("school_id", schoolId)
     .eq("role", "teacher")
-    .order("full_name");
+    .order("created_at");
 
   if (error) throw error;
-  return data;
+
+  // normalize to array of users
+  const users = (data || []).map((r: any) => r.user);
+  return users;
 }
 
 async function getUsers(schoolId: string): Promise<User[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("users")
-    .select("*")
+    .from("user_schools")
+    .select("user:users(*)")
     .eq("school_id", schoolId)
-    .order("full_name");
+    .order("created_at");
 
   if (error) throw error;
-  return data;
+  return (data || []).map((r: any) => r.user);
 }
 
 async function getSubjects(schoolId: string): Promise<Subject[]> {
@@ -94,14 +122,16 @@ async function getSubjectsWithTeachers(schoolId: string): Promise<SubjectWithTea
 
   if (subjectsError) throw subjectsError;
 
-  // Fetch all teachers (users with role='teacher')
-  const { data: teachers, error: teachersError } = await supabase
-    .from("users")
-    .select("*")
+  // Fetch all teachers via user_schools membership
+  const { data: teacherRows, error: teachersError } = await supabase
+    .from("user_schools")
+    .select("user:users(*)")
     .eq("school_id", schoolId)
     .eq("role", "teacher");
 
   if (teachersError) throw teachersError;
+
+  const teachers = (teacherRows || []).map((r: any) => r.user);
 
   // Map teachers to subjects
   return subjects.map((subject) => ({
@@ -154,6 +184,42 @@ async function getSchools(): Promise<School[]> {
   return data;
 }
 
+async function getUserSchools(): Promise<SchoolWithRole[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userErr,
+  } = await supabase.auth.getUser();
+
+  if (userErr || !user) return [];
+
+  const { data: userRow, error: userRowErr } = await supabase
+    .from("users")
+    .select("id")
+    .eq("auth_id", user.id)
+    .maybeSingle();
+
+  if (userRowErr || !userRow) return [];
+
+  const { data, error } = await supabase
+    .from("user_schools")
+    .select("school_id, role, created_at, schools(id, name)")
+    .eq("user_id", userRow.id);
+
+  if (error || !data) return [];
+
+  return (data || []).map((row) => {
+    const nested = Array.isArray(row.schools) ? row.schools[0] : row.schools;
+    return {
+      id: row.school_id || nested?.id,
+      name: nested?.name ?? null,
+      role: row.role,
+      created_at: row.created_at,
+    };
+  });
+}
+
 async function getSchoolById(schoolId: string): Promise<School | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.from("schools").select("*").eq("id", schoolId).single();
@@ -165,33 +231,45 @@ async function getSchoolById(schoolId: string): Promise<School | null> {
 async function getUsersWithoutSubject(schoolId: string): Promise<User[]> {
   const supabase = await createClient();
   const { data, error } = await supabase
-    .from("users")
-    .select("*")
+    .from("user_schools")
+    .select("user:users(*)")
     .eq("school_id", schoolId)
-    .is("specialty_subject_id", null)
-    .order("full_name");
+    .order("created_at");
 
   if (error) throw error;
-  return data;
+  return (data || []).map((r: any) => r.user).filter((u: any) => u.specialty_subject_id === null);
 }
 
 async function createUser(user: {
   authId?: string | null;
   fullName: string;
   role?: string;
-  schoolId: string;
+  schoolId?: string;
   specialtySubjectId?: string | null;
 }): Promise<void> {
   const supabase = await createClient();
-  const { error } = await supabase.from("users").insert({
-    auth_id: user.authId ?? null,
-    full_name: user.fullName,
-    role: user.role ?? "teacher",
-    school_id: user.schoolId,
-    specialty_subject_id: user.specialtySubjectId ?? null,
-  });
+  const { data: insertData, error } = await supabase
+    .from("users")
+    .insert({
+      auth_id: user.authId ?? null,
+      full_name: user.fullName,
+      specialty_subject_id: user.specialtySubjectId ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) throw error;
+
+  // if a schoolId was provided, create membership in user_schools
+  if (user.schoolId && insertData?.id) {
+    const res = await supabase.from("user_schools").insert({
+      user_id: insertData.id,
+      school_id: user.schoolId,
+      role: user.role === "admin" ? "admin" : "teacher",
+    });
+
+    if (res.error) throw res.error;
+  }
 }
 
 async function updateUser(
@@ -207,13 +285,34 @@ async function updateUser(
     .from("users")
     .update({
       ...(updates.fullName && { full_name: updates.fullName }),
-      ...(updates.role && { role: updates.role }),
       ...(updates.specialtySubjectId !== undefined && {
         specialty_subject_id: updates.specialtySubjectId,
       }),
     })
     .eq("id", userId);
 
+  if (error) throw error;
+}
+
+async function updateUserActiveSchool(schoolId: string): Promise<void> {
+  const supabase = await createClient();
+
+  const { data: userData } = await supabase.auth.getUser();
+  const authUser = userData.user;
+  if (!authUser) return;
+
+  const { data: userRow, error: userRowErr } = await supabase
+    .from("users")
+    .select("id")
+    .eq("auth_id", authUser.id)
+    .maybeSingle();
+
+  if (userRowErr || !userRow) return;
+
+  const { error } = await supabase
+    .from("users")
+    .update({ active_school_id: schoolId })
+    .eq("id", userRow.id);
   if (error) throw error;
 }
 
@@ -227,8 +326,10 @@ export const DatabaseService = {
   getRules,
   getScheduleSlots,
   getSchools,
+  getUserSchools,
   getSchoolById,
   getUsersWithoutSubject,
   createUser,
   updateUser,
+  updateUserActiveSchool,
 };

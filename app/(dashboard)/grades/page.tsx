@@ -1,8 +1,10 @@
+import { UserService } from "@/services/user-service";
 import { DatabaseService } from "@/services/db-service";
 
 export default async function GradesPage() {
-  const currentUser = (await DatabaseService.getCurrentUser())!;
-  const grades = await DatabaseService.getGrades(currentUser.school_id);
+  const user = await DatabaseService.getCurrentUser();
+  const currentUser = await UserService.checkCurrentUser(user, "/grades");
+  const grades = await DatabaseService.getGrades(currentUser.active_school_id);
 
   return (
     <div className="space-y-6">

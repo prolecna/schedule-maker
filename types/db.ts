@@ -5,141 +5,141 @@ export type Database = {
     Tables: {
       audit_logs: {
         Row: {
-          action: string;
-          changed_at: string;
-          changed_by: string;
           id: string;
-          new_data: Json | null;
-          old_data: Json | null;
-          record_id: string;
-          school_id: string | null;
           table_name: string;
+          record_id: string;
+          action: string;
+          old_data: Json | null;
+          new_data: Json | null;
+          changed_by: string;
+          changed_at: string;
+          school_id: string | null;
         };
         Insert: {
-          action: string;
-          changed_at?: string;
-          changed_by: string;
           id?: string;
-          new_data?: Json | null;
-          old_data?: Json | null;
-          record_id: string;
-          school_id?: string | null;
           table_name: string;
+          record_id: string;
+          action: string;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_by: string;
+          changed_at?: string;
+          school_id?: string | null;
         };
         Update: {
-          action?: string;
-          changed_at?: string;
-          changed_by?: string;
           id?: string;
-          new_data?: Json | null;
-          old_data?: Json | null;
-          record_id?: string;
-          school_id?: string | null;
           table_name?: string;
+          record_id?: string;
+          action?: string;
+          old_data?: Json | null;
+          new_data?: Json | null;
+          changed_by?: string;
+          changed_at?: string;
+          school_id?: string | null;
         };
       };
       grades: {
         Row: {
-          group: number | null;
           id: string;
           level: number;
+          group: number | null;
           school_id: string;
         };
         Insert: {
-          group?: number | null;
           id?: string;
           level: number;
+          group?: number | null;
           school_id: string;
         };
         Update: {
-          group?: number | null;
           id?: string;
           level?: number;
+          group?: number | null;
           school_id?: string;
         };
       };
       rules: {
         Row: {
-          created_at: string | null;
           id: string;
-          is_hard: boolean;
           name: string;
-          parameters: Json;
           rule_type: string;
+          is_hard: boolean;
+          parameters: Json;
           school_id: string;
+          created_at: string | null;
           updated_at: string | null;
           updated_by: string | null;
         };
         Insert: {
-          created_at?: string | null;
           id?: string;
-          is_hard?: boolean;
           name: string;
-          parameters: Json;
           rule_type: string;
+          is_hard?: boolean;
+          parameters: Json;
           school_id: string;
+          created_at?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
         Update: {
-          created_at?: string | null;
           id?: string;
-          is_hard?: boolean;
           name?: string;
-          parameters?: Json;
           rule_type?: string;
+          is_hard?: boolean;
+          parameters?: Json;
           school_id?: string;
+          created_at?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
       };
       schedule_slots: {
         Row: {
-          day_of_week: number;
-          grade_id: string;
           id: string;
-          period_number: number;
-          school_id: string;
+          grade_id: string;
           subject_id: string;
           teacher_id: string;
+          day_of_week: number;
+          period_number: number;
+          school_id: string;
           updated_at: string | null;
         };
         Insert: {
-          day_of_week: number;
-          grade_id: string;
           id?: string;
-          period_number: number;
-          school_id: string;
+          grade_id: string;
           subject_id: string;
           teacher_id: string;
+          day_of_week: number;
+          period_number: number;
+          school_id: string;
           updated_at?: string | null;
         };
         Update: {
-          day_of_week?: number;
-          grade_id?: string;
           id?: string;
-          period_number?: number;
-          school_id?: string;
+          grade_id?: string;
           subject_id?: string;
           teacher_id?: string;
+          day_of_week?: number;
+          period_number?: number;
+          school_id?: string;
           updated_at?: string | null;
         };
       };
       schools: {
         Row: {
-          created_at: string | null;
           id: string;
           name: string;
+          created_at: string | null;
         };
         Insert: {
-          created_at?: string | null;
           id?: string;
           name: string;
+          created_at?: string | null;
         };
         Update: {
-          created_at?: string | null;
           id?: string;
           name?: string;
+          created_at?: string | null;
         };
       };
       subjects: {
@@ -164,25 +164,42 @@ export type Database = {
           id: string;
           auth_id: string | null;
           full_name: string;
-          role: string;
-          school_id: string;
           specialty_subject_id: string | null;
+          active_school_id: string | null;
         };
         Insert: {
           id?: string;
           auth_id?: string | null;
           full_name: string;
-          role?: string;
-          school_id: string;
           specialty_subject_id?: string | null;
+          active_school_id: string | null;
         };
         Update: {
           id?: string;
           auth_id?: string | null;
           full_name?: string;
-          role?: string;
-          school_id?: string;
           specialty_subject_id?: string | null;
+          active_school_id: string | null;
+        };
+      };
+      user_schools: {
+        Row: {
+          user_id: string;
+          school_id: string;
+          role: "teacher" | "admin";
+          created_at: string | null;
+        };
+        Insert: {
+          user_id: string;
+          school_id: string;
+          role?: "teacher" | "admin";
+          created_at?: string | null;
+        };
+        Update: {
+          user_id?: string;
+          school_id?: string;
+          role?: "teacher" | "admin";
+          created_at?: string | null;
         };
       };
     };
@@ -198,9 +215,18 @@ export type Subject = Tables<"subjects">;
 export type Rule = Tables<"rules">;
 export type ScheduleSlot = Tables<"schedule_slots">;
 export type School = Tables<"schools">;
+export type UserSchool = Tables<"user_schools">;
 
 export type UserWithSubject = User & {
   specialty_subject: Subject | null;
+};
+
+export type UserWithSchools = User & {
+  schools: SchoolWithRole[];
+};
+
+export type SchoolWithRole = School & {
+  role: string | null;
 };
 
 export type SubjectWithTeacher = Subject & {

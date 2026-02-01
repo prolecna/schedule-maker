@@ -1,31 +1,20 @@
+import Sidebar from "@/components/navigation-sidebar/sidebar";
 import { AuthButton } from "@/components/auth-button";
-import { Sidebar } from "@/components/sidebar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { createClient } from "@/lib/supabase/server";
-import { DatabaseService } from "@/services/db-service";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
+import { ReactNode, Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: userData } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!userData.user) {
     redirect("/auth/login");
   }
-
-  const currentUser = await DatabaseService.getCurrentUser();
-
-  if (!currentUser) {
-    redirect("/auth/complete-profile");
-  }
-
-  const school = await DatabaseService.getSchoolById(currentUser.school_id);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -41,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </header>
       <div className="flex flex-1">
-        <Sidebar schoolName={school?.name ?? "Unknown School"} />
+        <Sidebar />
         <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
