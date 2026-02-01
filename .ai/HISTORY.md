@@ -127,3 +127,4 @@ Create a plan to implement this change (db level, code level, etc).
 - UI Updates: Redesigned the choose-school experience; Improved the school selection component in sidebar navigation.
 
 18. Move "role" column from "user_schools" to "users" table. Update the application code accordingly.
+19. The "empty state" UI is inconsistent across the pages in the navigation (nav-items). Update it so that it's similar on all pages. It should be a centered section with a nice SVG showing no data and a message below. Keep the messages the same as they are now.

@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import EmptyState from "@/components/ui/empty-state";
 
 export default async function TeachersPage() {
   const user = await DatabaseService.getCurrentUser();
@@ -26,24 +27,23 @@ export default async function TeachersPage() {
         <AddTeacherDrawer schoolId={currentUser.active_school_id} />
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {teachers.length === 0 ? (
+      {teachers.length === 0 ? (
+        <EmptyState
+          title="No teachers found."
+          description="Add your first teacher to get started."
+        />
+      ) : (
+        <div className="rounded-lg border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                  No teachers found. Add your first teacher to get started.
-                </TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
               </TableRow>
-            ) : (
-              teachers.map((teacher) => (
+            </TableHeader>
+            <TableBody>
+              {teachers.map((teacher) => (
                 <TableRow key={teacher.id}>
                   <TableCell className="font-medium">{teacher.full_name}</TableCell>
                   <TableCell>{teacher.specialty_subject?.name}</TableCell>
@@ -51,11 +51,11 @@ export default async function TeachersPage() {
                     <TeacherActions teacher={teacher} schoolId={currentUser.active_school_id} />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   );
 }

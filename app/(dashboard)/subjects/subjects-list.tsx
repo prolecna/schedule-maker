@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import EmptyState from "@/components/ui/empty-state";
 import type { SubjectWithTeacher } from "@/types/db";
 
 type Filter = "all" | "assigned" | "unassigned";
@@ -57,7 +58,7 @@ export function SubjectsList({ subjects }: SubjectsListProps) {
       </div>
 
       {filteredSubjects.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">No subjects found.</p>
+        <EmptyState title="No subjects found." />
       ) : (
         <div className="flex flex-wrap gap-4">
           {filteredSubjects.map((subject) => (

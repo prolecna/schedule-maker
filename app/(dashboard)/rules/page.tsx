@@ -1,6 +1,7 @@
 import RulesTable from "./rules-table";
 import { UserService } from "@/services/user-service";
 import { DatabaseService } from "@/services/db-service";
+import EmptyState from "@/components/ui/empty-state";
 
 export default async function RulesPage() {
   const user = await DatabaseService.getCurrentUser();
@@ -13,8 +14,7 @@ export default async function RulesPage() {
       <p className="text-muted-foreground mt-2">Manage scheduling rules.</p>
 
       <div className="mt-8">
-        {rules.length === 0 && <div className="text-muted-foreground mt-4">No rules found.</div>}
-        {rules.length > 0 && <RulesTable rules={rules} />}
+        {rules.length === 0 ? <EmptyState title="No rules found." /> : <RulesTable rules={rules} />}
       </div>
     </div>
   );

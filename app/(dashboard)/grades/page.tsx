@@ -1,3 +1,4 @@
+import EmptyState from "@/components/ui/empty-state";
 import { UserService } from "@/services/user-service";
 import { DatabaseService } from "@/services/db-service";
 
@@ -14,9 +15,7 @@ export default async function GradesPage() {
       </div>
 
       {grades.length === 0 ? (
-        <p className="text-muted-foreground text-center py-8">
-          No grades found. Add your first grade to get started.
-        </p>
+        <EmptyState title="No grades found." description="Add your first grade to get started." />
       ) : (
         <div className="flex flex-wrap gap-4">
           {grades.map((grade) => (
