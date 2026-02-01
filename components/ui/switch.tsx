@@ -11,7 +11,7 @@ import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
 
 type SwitchProps = ComponentPropsWithoutRef<typeof SwitchPrimitive.Root> & {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 };
 
 const Switch = forwardRef<ComponentRef<typeof SwitchPrimitive.Root>, SwitchProps>(

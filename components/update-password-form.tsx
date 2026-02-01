@@ -7,15 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { ComponentPropsWithoutRef, FormEvent, useState } from "react";
 
-export function UpdatePasswordForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
+export function UpdatePasswordForm({ className, ...props }: ComponentPropsWithoutRef<"div">) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
+  const handleForgotPassword = async (e: FormEvent) => {
     e.preventDefault();
     const supabase = createClient();
     setIsLoading(true);

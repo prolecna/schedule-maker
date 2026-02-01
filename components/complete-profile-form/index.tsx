@@ -14,11 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, FormEvent, ComponentPropsWithoutRef } from "react";
 import type { School, Subject } from "@/types/db";
 import { getSubjectsBySchool } from "./actions";
 
-interface CompleteProfileFormProps extends React.ComponentPropsWithoutRef<"div"> {
+interface CompleteProfileFormProps extends ComponentPropsWithoutRef<"div"> {
   schools: School[];
 }
 
@@ -47,7 +47,7 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
     setSubjectId("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
@@ -90,7 +90,6 @@ export function CompleteProfileForm({ className, schools, ...props }: CompletePr
 
       if (insertError) throw insertError;
 
-      router.push("/");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "An error occurred");

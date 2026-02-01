@@ -1,8 +1,9 @@
 "use client";
 
-import { InfoIcon, Loader2Icon, OctagonXIcon, ThumbsUpIcon, TriangleAlertIcon } from "lucide-react";
+import { CSSProperties } from "react";
 import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+import { InfoIcon, Loader2Icon, OctagonXIcon, ThumbsUpIcon, TriangleAlertIcon } from "lucide-react";
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
@@ -25,7 +26,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
           "--normal-border": "hsl(var(--accent))",
           "--border-radius": "var(--radius)",
           "--width": "300px",
-        } as React.CSSProperties
+        } as CSSProperties
       }
       {...props}
     />
