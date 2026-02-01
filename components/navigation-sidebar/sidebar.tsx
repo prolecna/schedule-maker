@@ -1,8 +1,8 @@
 import SidebarClient from "./sidebar.client";
-import { DatabaseService } from "@/services/db-service";
+import { UserService } from "@/services/user-service";
 
 export default async function Sidebar() {
-  const currentUser = await DatabaseService.getCurrentUser();
+  const currentUser = await UserService.getCurrentUser();
   if (!currentUser) return null;
 
   return <SidebarClient currentUser={currentUser} />;

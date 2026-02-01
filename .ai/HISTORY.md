@@ -128,3 +128,10 @@ Create a plan to implement this change (db level, code level, etc).
 
 18. Move "role" column from "user_schools" to "users" table. Update the application code accordingly.
 19. The "empty state" UI is inconsistent across the pages in the navigation (nav-items). Update it so that it's similar on all pages. It should be a centered section with a nice SVG showing no data and a message below. Keep the messages the same as they are now.
+20. Propose a plan to add support for schedule history in the database, and in the application code.
+
+- Database: Created schedules table with schedule_status enum and a one-active-per-school unique index.
+- Slots migration: Added schedule_id to schedule_slots, backfilled existing slots to a "Default Schedule", then made schedule_id NOT NULL.
+- Snapshots: Created schedule_snapshots table to store full point-in-time JSON backups with reason, created_at, and created_by.
+- Security: Enabled RLS and added policies for schedules and schedule_snapshots (school-scoped read; admin write).
+- App types & API: Updated db.ts and db-service.ts; Refactored db-service into smaller services.

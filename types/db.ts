@@ -1,5 +1,7 @@
 type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+export type ScheduleStatus = "active" | "inactive";
+
 export type Database = {
   public: {
     Tables: {
@@ -36,6 +38,70 @@ export type Database = {
           changed_by?: string;
           changed_at?: string;
           school_id?: string | null;
+        };
+      };
+      schedules: {
+        Row: {
+          id: string;
+          school_id: string;
+          name: string;
+          status: ScheduleStatus;
+          valid_from: string;
+          valid_to: string | null;
+          created_at: string;
+          created_by: string;
+          modified_at: string;
+          modified_by: string;
+        };
+        Insert: {
+          id?: string;
+          school_id: string;
+          name: string;
+          status?: ScheduleStatus;
+          valid_from?: string;
+          valid_to?: string | null;
+          created_at?: string;
+          created_by: string;
+          modified_at?: string;
+          modified_by: string;
+        };
+        Update: {
+          id?: string;
+          school_id?: string;
+          name?: string;
+          status?: ScheduleStatus;
+          valid_from?: string;
+          valid_to?: string | null;
+          created_at?: string;
+          created_by?: string;
+          modified_at?: string;
+          modified_by?: string;
+        };
+      };
+      schedule_snapshots: {
+        Row: {
+          id: string;
+          schedule_id: string;
+          snapshot_data: Json;
+          reason: string | null;
+          created_at: string;
+          created_by: string;
+        };
+        Insert: {
+          id?: string;
+          schedule_id: string;
+          snapshot_data: Json;
+          reason?: string | null;
+          created_at?: string;
+          created_by: string;
+        };
+        Update: {
+          id?: string;
+          schedule_id?: string;
+          snapshot_data?: Json;
+          reason?: string | null;
+          created_at?: string;
+          created_by?: string;
         };
       };
       grades: {
@@ -96,6 +162,7 @@ export type Database = {
       schedule_slots: {
         Row: {
           id: string;
+          schedule_id: string;
           grade_id: string;
           subject_id: string;
           teacher_id: string;
@@ -106,6 +173,7 @@ export type Database = {
         };
         Insert: {
           id?: string;
+          schedule_id: string;
           grade_id: string;
           subject_id: string;
           teacher_id: string;
@@ -116,6 +184,7 @@ export type Database = {
         };
         Update: {
           id?: string;
+          schedule_id?: string;
           grade_id?: string;
           subject_id?: string;
           teacher_id?: string;
@@ -216,6 +285,8 @@ export type Rule = Tables<"rules">;
 export type ScheduleSlot = Tables<"schedule_slots">;
 export type School = Tables<"schools">;
 export type UserSchool = Tables<"user_schools">;
+export type Schedule = Tables<"schedules">;
+export type ScheduleSnapshot = Tables<"schedule_snapshots">;
 
 export type UserWithSubject = User & {
   specialty_subject: Subject | null;
@@ -237,4 +308,12 @@ export type ScheduleSlotWithRelations = ScheduleSlot & {
   grade: Grade;
   teacher: UserWithSubject;
   subject: Subject;
+};
+
+export type ScheduleWithSlotCount = Schedule & {
+  slot_count: number;
+};
+
+export type ScheduleSnapshotWithCreator = ScheduleSnapshot & {
+  created_by_user: User;
 };

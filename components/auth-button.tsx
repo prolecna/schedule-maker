@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Button } from "./ui/button";
 import { LogoutButton } from "./logout-button";
-import { DatabaseService } from "@/services/db-service";
+import { UserService } from "@/services/user-service";
 
 export async function AuthButton() {
-  const user = await DatabaseService.getCurrentUser();
+  const user = await UserService.getCurrentUser();
 
   return user ? (
     <div className="flex items-center gap-4">

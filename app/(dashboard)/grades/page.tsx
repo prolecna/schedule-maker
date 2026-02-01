@@ -1,11 +1,11 @@
 import EmptyState from "@/components/ui/empty-state";
 import { UserService } from "@/services/user-service";
-import { DatabaseService } from "@/services/db-service";
+import { GradeService } from "@/services/grade-service";
 
 export default async function GradesPage() {
-  const user = await DatabaseService.getCurrentUser();
+  const user = await UserService.getCurrentUser();
   const currentUser = await UserService.checkCurrentUser(user, "/grades");
-  const grades = await DatabaseService.getGrades(currentUser.active_school_id);
+  const grades = await GradeService.getGrades(currentUser.active_school_id);
 
   return (
     <div className="space-y-6">

@@ -1,8 +1,7 @@
-import { DatabaseService } from "@/services/db-service";
 import { UserService } from "@/services/user-service";
 
 export default async function SchedulePage() {
-  const user = await DatabaseService.getCurrentUser();
+  const user = await UserService.getCurrentUser();
   const currentUser = await UserService.checkCurrentUser(user, "/schedule");
 
   return (

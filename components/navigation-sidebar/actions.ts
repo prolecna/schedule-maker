@@ -1,7 +1,7 @@
 "use server";
 
-import { DatabaseService } from "@/services/db-service";
+import { UserService } from "@/services/user-service";
 
 export async function updateUserActiveSchool(newSchoolId: string) {
-  return await DatabaseService.updateUserActiveSchool(newSchoolId);
+  return await UserService.updateUserActiveSchool(newSchoolId);
 }

@@ -1,7 +1,7 @@
 "use server";
 
-import { DatabaseService } from "@/services/db-service";
+import { SubjectService } from "@/services/subject-service";
 
 export async function getSubjectsBySchool(schoolId: string) {
-  return DatabaseService.getSubjects(schoolId);
+  return SubjectService.getSubjects(schoolId);
 }

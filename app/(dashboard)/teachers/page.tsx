@@ -1,6 +1,5 @@
 import { TeacherActions } from "./teacher-actions";
 import { UserService } from "@/services/user-service";
-import { DatabaseService } from "@/services/db-service";
 import { AddTeacherDrawer } from "@/components/add-teacher-drawer";
 import {
   Table,
@@ -13,9 +12,9 @@ import {
 import EmptyState from "@/components/ui/empty-state";
 
 export default async function TeachersPage() {
-  const user = await DatabaseService.getCurrentUser();
+  const user = await UserService.getCurrentUser();
   const currentUser = await UserService.checkCurrentUser(user, "/teachers");
-  const teachers = await DatabaseService.getTeachers(currentUser.active_school_id);
+  const teachers = await UserService.getTeachers(currentUser.active_school_id);
 
   return (
     <div className="space-y-6">

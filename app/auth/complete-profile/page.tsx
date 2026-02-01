@@ -1,8 +1,9 @@
-import { CompleteProfileForm } from "@/components/complete-profile-form";
-import { DatabaseService } from "@/services/db-service";
-import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { UserService } from "@/services/user-service";
+import { SchoolService } from "@/services/school-service";
 import { navItems } from "@/components/navigation-sidebar/nav-items";
+import { CompleteProfileForm } from "@/components/complete-profile-form";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function CompleteProfilePage({
   }
 
   // Check if user already exists in users table
-  const currentUser = await DatabaseService.getCurrentUser();
+  const currentUser = await UserService.getCurrentUser();
   if (currentUser) {
     const queryParams = await searchParams;
     const redirectParam = queryParams?.redirect;
@@ -35,7 +36,7 @@ export default async function CompleteProfilePage({
     redirect(redirectUrl);
   }
 
-  const schools = await DatabaseService.getSchools();
+  const schools = await SchoolService.getSchools();
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">

@@ -1,6 +1,6 @@
 import ChooseSchool from "./ChooseSchool";
 import { redirect } from "next/navigation";
-import { DatabaseService } from "@/services/db-service";
+import { UserService } from "@/services/user-service";
 import { navItems } from "@/components/navigation-sidebar/nav-items";
 
 export default async function ChooseSchoolPage({
@@ -8,14 +8,14 @@ export default async function ChooseSchoolPage({
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-  const currentUser = await DatabaseService.getCurrentUser();
+  const currentUser = await UserService.getCurrentUser();
 
   if (!currentUser) {
     redirect("/auth/complete-profile");
   }
 
   if (currentUser && currentUser.schools.length === 1) {
-    await DatabaseService.updateUserActiveSchool(currentUser.schools[0].id);
+    await UserService.updateUserActiveSchool(currentUser.schools[0].id);
 
     const queryParams = await searchParams;
     const redirectParam = queryParams?.redirect;

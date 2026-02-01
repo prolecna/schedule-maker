@@ -1,12 +1,12 @@
 import RulesTable from "./rules-table";
-import { UserService } from "@/services/user-service";
-import { DatabaseService } from "@/services/db-service";
 import EmptyState from "@/components/ui/empty-state";
+import { UserService } from "@/services/user-service";
+import { RuleService } from "@/services/rule-service";
 
 export default async function RulesPage() {
-  const user = await DatabaseService.getCurrentUser();
+  const user = await UserService.getCurrentUser();
   const currentUser = await UserService.checkCurrentUser(user, "/rules");
-  const rules = await DatabaseService.getRules(currentUser.active_school_id);
+  const rules = await RuleService.getRules(currentUser.active_school_id);
 
   return (
     <div>

@@ -1,14 +1,16 @@
 "use server";
 
-import { DatabaseService } from "@/services/db-service";
-import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
+import { UserService } from "@/services/user-service";
+import { SchoolService } from "@/services/school-service";
+import { SubjectService } from "@/services/subject-service";
 
 export async function getAddTeacherData(schoolId: string) {
   const [usersWithoutSubject, subjects, school] = await Promise.all([
-    DatabaseService.getUsersWithoutSubject(schoolId),
-    DatabaseService.getSubjects(schoolId),
-    DatabaseService.getSchoolById(schoolId),
+    UserService.getUsersWithoutSubject(schoolId),
+    SubjectService.getSubjects(schoolId),
+    SchoolService.getSchoolById(schoolId),
   ]);
 
   return {
